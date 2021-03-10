@@ -12,5 +12,221 @@ library(tidyverse)
 library(apaTables)
 library(sjPlot)
 library(readxl)
-#library(dataedu)
+# remotes::install_github("data-edu/dataedu")
+# I had to remove my GITHUB_PAT from my GitHub account to access the public github repo of dataedu.
+# devtools::install_github("data-edu/dataedu")
+library(dataedu)
 ```
+
+
+```{r import data}
+pre_survey <- dataedu::pre_survey
+
+course_data <- dataedu::course_data
+
+course_minutes <- dataedu::course_minutes
+```
+
+```{r clean pre_survey}
+pre_survey_q <- pre_survey %>% 
+  rename_with(~ str_remove(., "1MaincellgroupRow") %>% str_to_lower, .cols = Q1MaincellgroupRow1:Q1MaincellgroupRow10) %>% 
+  mutate(across(q1:q10, as.numeric))
+```
+
+```{r reverse}
+pre_survey_q_r <- pre_survey_q %>% 
+  mutate(across(c(q4,q7), ~recode(.x, "1"=5, "2"=4, "3"=3, '4'=2, "5"=1)))
+```
+
+```{r}
+measure_mean <- pre_survey_q_r %>% 
+  pivot_longer(cols = q1:q10,
+               names_to = "question",
+               values_to = "response") %>% 
+  mutate(
+    measure = case_when(
+      question %in% c("q1", "q4", "q5", "q8", "q10") ~ "int",
+      question %in% c("q2", "q6", "q9") ~ "uv",
+      question %in% c("q3", "q7") ~ "pc",
+      TRUE ~ NA_character_)
+  ) %>% 
+  group_by(measure) %>%
+  summarize(
+    mean_response = mean(response, na.rm = TRUE),
+    percent_NA = mean(is.na(response))
+    )
+```
+
+
+#### Side bar
+
+####################
+```{r}
+skimr::skim(pre_survey_q_r)
+```
+
+```{r weird username}
+pre_survey_q_r %>% group_by(opdata_username) %>% count() %>% arrange(desc(n))
+```
+There is a user name that is not like the others. Also, there are a couple users who filled out the survey A LOT! User 49147_1 filled it out 147 times!!? Keep everyone in for now. When we join/merge the data with the course info, then we'll see what happens.
+
+Also, we can try some IRT or other FA? Maybe later
+####################
+
+### Back on course
+
+## Processing the Course Data
+
+```{r}
+course_data_sep <- course_data %>% 
+  separate(col = CourseSectionOrigID,
+           into = c("subject", "semester", "section"),
+           sep = "-",
+           remove = FALSE)
+```
+
+```{r}
+pre_survey_final <- pre_survey_q_r %>% 
+  mutate(opdata_username = str_sub(opdata_username, start = 2, end = -3) %>% as.numeric)
+```
+```{r}
+pre_survey_final %>% group_by(opdata_username) %>% count() %>% arrange(desc(n)) %>% head()
+```
+Still getting similar high counts for some user names. The one weird user name got coerced to NA from the as.numeric, and got combined with the other NAs. Check again after merge.
+
+```{r}
+course_survey <- course_data_sep %>% 
+  left_join(pre_survey_final, by = c("Bb_UserPK" = "opdata_username", "CourseSectionOrigID" = "opdata_CourseID")) %>% 
+  rename(student_id = Bb_UserPK,
+         course_id = CourseSectionOrigID)
+```
+
+```{r}
+course_minutes_int <- course_minutes %>% 
+  mutate(Bb_UserPK = as.integer(Bb_UserPK))
+
+course_survey <- course_survey %>% 
+  left_join(course_minutes_int,
+            by = c("student_id" = "Bb_UserPK",
+                   "course_id" = "CourseSectionOrigID"))
+```
+
+```{r}
+head(course_survey)
+dim(course_survey)
+glimpse(course_survey)
+skimr::skim(course_survey)
+```
+
+The scales of the courses are all different (Points_Possible and Points_Earned), so use FinalGradeCEMS.
+
+## Finding Distinct Cases at the Student-Level
+
+```{r}
+distinct(course_survey, course_id, Gradebook_Item)
+```
+
+
+#### Try fuzzy matching?
+
+```{r, eval = F}
+#adist(course_survey$Gradebook_Item, course_survey$Gradebook_Item)
+
+library(stringdist)
+
+distance.methods<-c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw')
+dist.methods<-list()
+for(m in 1:length(distance.methods)) {
+  dist.name.enh<-matrix(NA, ncol = length(course_survey$Gradebook_Item),nrow = length(course_survey$Gradebook_Item))
+  for(i in 1:length(course_survey$Gradebook_Item)) {
+    for(j in 1:length(course_survey$Gradebook_Item)) { 
+      dist.name.enh[j,i]<-stringdist(tolower(course_survey[i,]$Gradebook_Item),tolower(course_survey[j,]$Gradebook_Item),method = distance.methods[m])      
+        #adist.enhance(course_survey[i,]$Gradebook_Item,course_survey[j,]$Gradebook_Item)
+    }  
+  }
+  dist.methods[[distance.methods[m]]]<-dist.name.enh
+}
+ 
+match.s1.s2.enh<-NULL
+for(m in 1:length(dist.methods)) {
+ 
+  dist.matrix<-as.matrix(dist.methods[[distance.methods[m]]])
+  min.name.enh<-apply(dist.matrix, 1, base::min)
+  for(i in 1:nrow(dist.matrix))
+  {
+    s2.i<-match(min.name.enh[i],dist.matrix[i,])
+    s1.i<-i
+    match.s1.s2.enh<-rbind(data.frame(s2.i=s2.i,s1.i=s1.i,s2name=course_survey[s2.i,]$Gradebook_Item, s1name=course_survey[s1.i,]$Gradebook_Item, adist=min.name.enh[i],method=distance.methods[m]),match.s1.s2.enh)
+  }
+}
+```
+
+## Analysis
+
+```{r}
+dat <-
+  distinct(course_survey, course_id, student_id, .keep_all = TRUE)
+```
+
+
+```{r}
+theme_set(theme_dataedu())
+```
+
+```{r}
+dat %>%
+  # aes() tells ggplot2 what variables to map to what feature of a plot
+  # Here we map variables to the x- and y-axis
+  ggplot(aes(x = TimeSpent, y = FinalGradeCEMS)) + 
+  # Creates a point with x- and y-axis coordinates specified above
+  geom_point(color = dataedu_colors("green")) + 
+  theme_dataedu() +
+  labs(x = "Time Spent",
+       y = "Final Grade")
+```
+I got a warning that I got 1817 values removed.
+
+```{r}
+dat %>%
+  ggplot(aes(x = TimeSpent, y = FinalGradeCEMS)) +
+    geom_point(color = dataedu_colors("green")) + # same as above
+  # this adds a line of best fit
+  # method = "lm" tells ggplot2 to fit the line using linear regression
+  geom_smooth(method = "lm") +
+  theme_dataedu() +
+  labs(x = "Time Spent",
+       y = "Final Grade")
+```
+
+Since Final Grade has a limit, I wonder if a polynomial or exp/log model would work.
+
+```{r}
+m_linear <-
+  lm(FinalGradeCEMS ~ TimeSpent, data = dat)
+
+summary(m_linear)
+```
+
+```{r}
+tab_model(m_linear,
+          title = "Table 7.1")
+```
+
+
+Modeling with TimeSpent per hour
+
+```{r}
+# creating a new variable for the amount of time spent in hours
+dat <- 
+  dat %>% 
+  mutate(TimeSpent_hours = TimeSpent / 60)
+
+# the same linear model as above, but with the TimeSpent variable in hours
+m_linear_1 <- 
+  lm(FinalGradeCEMS ~ TimeSpent_hours, data = dat)
+
+# viewing the output of the linear model
+tab_model(m_linear_1,
+          title = "Table 7.2")
+```
+
