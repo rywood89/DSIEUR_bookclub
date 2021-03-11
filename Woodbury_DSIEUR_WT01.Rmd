@@ -184,7 +184,7 @@ dat %>%
   labs(x = "Time Spent",
        y = "Final Grade")
 ```
-I got a warning that I got 1817 values removed.
+I got a warning that I got 30 values removed.
 
 ```{r}
 dat %>%
