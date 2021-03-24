@@ -220,6 +220,7 @@ ggplot(facet_frpl_df, aes(x = value, y = frpl_pct)) +
   scale_x_continuous(labels = scales::percent) +
   theme_dataedu() +
   theme(legend.position = "none") +
+    geom_smooth(method = "lm") +
   facet_wrap(~name)
 ```
 
