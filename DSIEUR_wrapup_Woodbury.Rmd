@@ -1,0 +1,136 @@
+---
+title: "DSIEUR Wrap-up"
+subtitle: "Chapters 17-19"
+author: "Ryan Woodbury"
+date: "5/26/2021"
+output: 
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    lib_dir: libs
+    nature:
+        highlightStyle: github
+        conIncrementalSlides: false
+        ratio: '16:9'
+---
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_mono_accent(
+  base_color = "#1c5253",
+  header_font_google = google_font("Josefin Sans"),
+  text_font_google   = google_font("Montserrat", "300", "300i"),
+  code_font_google   = google_font("Fira Mono")
+)
+```
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(cache = TRUE)
+```
+
+
+class: middle
+
+# DSIEUR Wrap-up
+
+- Chapter 17: Learning More
+- Chapter 18: Additional Resources
+- Chapter 19: Conclusion: Where to Next?
+- Sharing with our communities
+
+---
+
+class: middle
+
+# Chapter 17: Learning More
+- Adopt a Growth Mindset (vs. a Fixed Mindset)
+- Discover New Information
+  - See Chapter 18
+- Ask for Help
+  - Where? Who?
+- Share What You've Learned
+  - Where? How?
+- Welcome Others
+
+
+---
+
+class: middle
+
+# Chapter 18: Additional Resources
+
+There are a ton of books, articles, chapters, workshops, and videos referenced.  
+What are your go-to recommendations for learning R? Statistics? Education knowledge? Data science?
+
+---
+
+class: middle
+
+## The book is structured into project-based learning, which has its benefits.
+
+## Besides project-based learning, how else do you find the time and motivation to learn new things or keep up with different trends?
+
+---
+
+class: middle
+
+# Chapter 19: Conclusion: Where to Next?
+
+- Learn in the Context of Education
+  - How do you identify a project or problem that needs your attention?
+- Learn to Collaborate with Others
+  - Do you have an education-related data science question and need help with it?
+  - Learn to collaborate with your future self.
+- Learn Every Time You Code
+- Learn to Take Strategic Breaks to Help Solve Problems
+- Learn More Meaningfully by Knowing Your Why
+
+---
+
+class: middle
+
+# The Future of Data Science in Education
+
+**The last few chapters of the book focuses on _personal actions_ to engage with data science in education. However, we learned from chapter 4 (and personal experience) that we must consider the larger context and systems.**
+### What are some things you'd like to see the field of data science (generally) and DS in education (specifically) move toward in the next 3-5 years?
+
+
+---
+
+class: middle
+
+# Sharing with our communities
+
+---
+
+class: middle
+
+# Sharing with our communities
+
+## What has been one take-away from reading this book?
+
+---
+
+class: middle
+
+# Sharing with our communities
+
+## What's one thing you wish everyone would/should know about ... ?  
+### - using R, 
+### - performing statistics, 
+### - doing data science, or 
+### - working in education
+
+---
+
+class: middle
+
+# Sharing with our communities
+
+## What advice would you give to the next DSIEUR book club cohort?
+
+---
+class: center, middle
+
+# Thank you
+
+# H.A.G.S.
